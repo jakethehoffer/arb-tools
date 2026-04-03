@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Arbitrage Stake Calculator</title>
+    <link rel="stylesheet" href="./static/styles.css" />
+  </head>
+  <body class="calculator-body">
+    <main class="calculator-shell">
+      <section class="calculator-panel">
+        <header class="calculator-head">
+          <div>
+            <div class="eyebrow">Telegram Arb Calculator</div>
+            <h1>Inputs</h1>
+          </div>
+          <div class="calculator-status" id="calculatorStatus">Enter a positive amount on either side.</div>
+        </header>
+
+        <section id="calculatorError" class="calculator-error" hidden>
+          Invalid calculator link. Open this page from a fresh Telegram alert.
+        </section>
+
+        <div id="calculatorContent" class="calculator-input-grid" hidden>
+          <div class="field calculator-field">
+            <label for="amountA">Amount on bookmaker A</label>
+            <div class="calculator-input-caption" id="amountABook">Bookmaker A</div>
+            <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+          </div>
+          <div class="field calculator-field">
+            <label for="amountB">Amount on bookmaker B</label>
+            <div class="calculator-input-caption" id="amountBBook">Bookmaker B</div>
+            <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+          </div>
+        </div>
+
+        <div class="calculator-validation" id="calculatorValidation" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./static/calculator.js"></script>
+  </body>
+</html>

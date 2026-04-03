@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telegram Alert Launcher</title>
+    <link rel="stylesheet" href="./static/styles.css" />
+  </head>
+  <body class="calculator-body">
+    <main class="calculator-shell">
+      <section class="calculator-panel launcher-panel">
+        <header class="calculator-head">
+          <div>
+            <div class="eyebrow">Telegram Alert Launcher</div>
+            <h1>Open all</h1>
+          </div>
+          <div class="calculator-status" id="launcherStatus">Preparing destinations.</div>
+        </header>
+
+        <p class="launcher-hint">
+          Best results come from a desktop browser. This page will try to open each destination in its own window and
+          place them side by side when the browser allows it.
+        </p>
+
+        <section id="launcherError" class="calculator-error" hidden>
+          Invalid launcher link. Open the launcher again from a fresh Telegram alert.
+        </section>
+
+        <div id="launcherContent" hidden>
+          <div class="launcher-actions">
+            <div class="launcher-summary" id="launcherSummary">Preparing destinations.</div>
+            <button id="launcherOpenAll" class="launcher-button" type="button">Open all again</button>
+          </div>
+
+          <div id="launcherTargets" class="launcher-targets" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./static/open-all.js"></script>
+  </body>
+</html>

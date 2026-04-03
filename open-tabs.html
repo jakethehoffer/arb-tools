@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telegram Tab Bootstrap</title>
+    <link rel="stylesheet" href="./static/styles.css" />
+  </head>
+  <body class="calculator-body">
+    <main class="calculator-shell">
+      <section class="calculator-panel open-tabs-panel">
+        <header class="calculator-head">
+          <div>
+            <div class="eyebrow">Telegram Native Tab Opener</div>
+            <h1 id="tabBootstrapHeading">Opening tabs</h1>
+          </div>
+          <div class="calculator-status" id="tabBootstrapStatus">Preparing Edge handoff.</div>
+        </header>
+
+        <section id="tabBootstrapError" class="calculator-error" hidden>
+          Invalid tab opener link. Open the Telegram alert again.
+        </section>
+
+        <div id="tabBootstrapFallback" class="open-tabs-fallback" hidden>
+          <p class="open-tabs-hint" id="tabBootstrapHint">
+            If the native helper is installed, this page should disappear and the tabs should open automatically.
+          </p>
+
+          <div class="open-tabs-actions">
+            <a
+              id="tabBootstrapPrimaryLink"
+              class="launcher-button launcher-button-secondary"
+              href="./calculator"
+              target="_self"
+              rel="noopener noreferrer"
+            >
+              Open primary page
+            </a>
+            <a
+              id="tabBootstrapOpenAllLink"
+              class="launcher-inline-link"
+              href="./open-all"
+              target="_self"
+              rel="noopener noreferrer"
+            >
+              Use browser launcher instead
+            </a>
+          </div>
+
+          <section class="open-tabs-install">
+            <div class="open-tabs-install-title">Install or update the local helper</div>
+            <p class="open-tabs-hint">
+              Run this once in PowerShell from the repo root on this Windows machine:
+            </p>
+            <pre class="open-tabs-command" id="tabBootstrapInstallCommand"></pre>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./static/open-tabs.js"></script>
+  </body>
+</html>
