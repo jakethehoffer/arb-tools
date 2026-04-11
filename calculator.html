@@ -12,7 +12,7 @@
         <header class="calculator-head">
           <div>
             <div class="eyebrow">Telegram Arb Calculator</div>
-            <h1>Inputs</h1>
+            <h1 id="calculatorHeading">Inputs</h1>
           </div>
           <div class="calculator-status" id="calculatorStatus">Enter a positive amount on either side.</div>
         </header>
@@ -21,16 +21,49 @@
           Invalid calculator link. Open this page from a fresh Telegram alert.
         </section>
 
-        <div id="calculatorContent" class="calculator-input-grid" hidden>
-          <div class="field calculator-field">
-            <label for="amountA">Amount on bookmaker A</label>
-            <div class="calculator-input-caption" id="amountABook">Bookmaker A</div>
-            <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+        <div id="calculatorContent" hidden>
+          <div id="calculatorEventInfo" class="calculator-event-info" hidden>
+            <span id="calculatorEvent" class="calculator-event-text"></span>
+            <span id="calculatorMarket" class="calculator-market-text"></span>
           </div>
-          <div class="field calculator-field">
-            <label for="amountB">Amount on bookmaker B</label>
-            <div class="calculator-input-caption" id="amountBBook">Bookmaker B</div>
-            <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+
+          <div class="calculator-arb-bar">
+            <div class="calculator-arb-section">
+              <span class="calculator-arb-label">Alert odds</span>
+              <span class="calculator-arb-badge" id="arbOriginal">—</span>
+            </div>
+            <div class="calculator-arb-section">
+              <span class="calculator-arb-label">Current odds</span>
+              <span class="calculator-arb-badge" id="arbCurrent">—</span>
+            </div>
+          </div>
+
+          <div class="calculator-odds-grid">
+            <div class="field calculator-odds-field">
+              <label for="oddsA">Odds</label>
+              <div class="calculator-input-caption" id="oddsABook">Bookmaker A</div>
+              <input id="oddsA" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+            </div>
+            <div class="field calculator-odds-field">
+              <label for="oddsB">Odds</label>
+              <div class="calculator-input-caption" id="oddsBBook">Bookmaker B</div>
+              <input id="oddsB" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+            </div>
+          </div>
+
+          <button type="button" class="calculator-reset-btn" id="resetOdds" style="display:none">Reset to alert odds</button>
+
+          <div class="calculator-input-grid">
+            <div class="field calculator-field">
+              <label for="amountA">Amount on bookmaker A</label>
+              <div class="calculator-input-caption" id="amountABook">Bookmaker A</div>
+              <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+            </div>
+            <div class="field calculator-field">
+              <label for="amountB">Amount on bookmaker B</label>
+              <div class="calculator-input-caption" id="amountBBook">Bookmaker B</div>
+              <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+            </div>
           </div>
         </div>
 

@@ -1211,6 +1211,124 @@ button.loading::after {
   color: var(--ink);
 }
 
+#calculatorContent {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  flex: 1;
+}
+
+.calculator-event-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.calculator-event-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.calculator-market-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.calculator-arb-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+}
+
+.calculator-arb-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculator-arb-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calculator-arb-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--ink-muted);
+}
+
+.calculator-arb-badge.calculator-arb-positive {
+  background: rgba(15, 139, 141, 0.12);
+  color: #0f8b8d;
+}
+
+.calculator-arb-badge.calculator-arb-negative {
+  background: rgba(180, 35, 24, 0.10);
+  color: #b42318;
+}
+
+.calculator-odds-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+.calculator-odds-field {
+  gap: 8px;
+}
+
+.calculator-odds-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calculator-odds-field input {
+  min-height: 52px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 17px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.calculator-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.calculator-reset-btn:hover {
+  transform: translateY(-1px);
+  color: var(--ink);
+}
+
 .calculator-validation {
   min-height: 20px;
   color: #b42318;
@@ -1440,6 +1558,15 @@ button.loading::after {
     text-align: left;
     max-width: none;
     font-size: 13px;
+  }
+
+  .calculator-odds-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-odds-field input {
+    min-height: 48px;
+    font-size: 16px;
   }
 
   .calculator-field input {
