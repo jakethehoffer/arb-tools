@@ -18,6 +18,7 @@ const state = {
 
 const STATUS_POLL_INTERVAL_MS = 250;
 const STATUS_POLL_TIMEOUT_MS = 8000;
+const STATIC_REDIRECT_DELAY_MS = 2000;
 const INSTALL_COMMAND = "powershell -ExecutionPolicy Bypass -File scripts/install_telegram_edge_tab_helper.ps1";
 
 function escapeHtml(value) {
@@ -230,6 +231,11 @@ async function pollLaunchStatus(token) {
   throw new Error("Native Edge tab helper did not confirm success in time.");
 }
 
+function isStaticHosted() {
+  const hostname = (window.location.hostname || "").toLowerCase();
+  return hostname.endsWith(".github.io") || hostname.endsWith(".pages.dev");
+}
+
 function init() {
   const targets = readTargets();
   if (!targets || targets.length < 2 || targets.length > 3) {
@@ -243,6 +249,17 @@ function init() {
   const protocolUri = buildProtocolUri(targets, state.launchToken);
   dom.status.textContent = `Waiting for the native helper to open ${targets.length - 1} additional tab${targets.length === 2 ? "" : "s"} in Edge.`;
   attemptNativeLaunch(protocolUri);
+
+  if (isStaticHosted()) {
+    // Static sites have no /open-tabs/status endpoint — redirect to the
+    // calculator after a short delay to give the native helper time to open
+    // the bookmaker tabs.
+    window.setTimeout(() => {
+      redirectPrimary();
+    }, STATIC_REDIRECT_DELAY_MS);
+    return;
+  }
+
   pollLaunchStatus(state.launchToken)
     .then(() => {
       redirectPrimary();
