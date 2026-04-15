@@ -1220,9 +1220,9 @@ button.loading::after {
 
 .calculator-event-info {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .calculator-event-text {
@@ -1239,9 +1239,9 @@ button.loading::after {
 
 .calculator-arb-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 28px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .calculator-arb-section {
