@@ -11,6 +11,8 @@ const dom = {
   oddsBBook: document.getElementById("oddsBBook"),
   oddsA: document.getElementById("oddsA"),
   oddsB: document.getElementById("oddsB"),
+  oddsAAmerican: document.getElementById("oddsAAmerican"),
+  oddsBAmerican: document.getElementById("oddsBAmerican"),
   resetOdds: document.getElementById("resetOdds"),
   amountABook: document.getElementById("amountABook"),
   amountBBook: document.getElementById("amountBBook"),
@@ -23,6 +25,10 @@ const dom = {
 const state = {
   config: null,
   lastStakeSource: null,
+  // Re-entrancy guards so decimal -> American -> decimal programmatic writes
+  // don't loop through their own input listeners.
+  syncingAmericanFromDecimal: false,
+  syncingDecimalFromAmerican: false,
 };
 
 function parsePositiveAmount(rawValue) {
@@ -83,6 +89,84 @@ function formatArbBadge(arbPercent) {
   return { text: `${arbPercent.toFixed(2)}%`, className: "calculator-arb-positive" };
 }
 
+// --------------------------------------------------------------------------
+// Decimal <-> American conversions
+// --------------------------------------------------------------------------
+//
+// American odds are integers with |x| >= 100.
+//
+//   decimal 2.00  ->  american +100  (even money boundary)
+//   decimal > 2.00 -> american = +(decimal - 1) * 100
+//   decimal < 2.00 -> american = -100 / (decimal - 1)
+//
+// The conversion is lossy in the American -> decimal direction because
+// American is integer-quantised. After a user edits the American field we
+// back-populate the decimal field with the exact inverse so subsequent
+// calculations stay consistent with what they see.
+// --------------------------------------------------------------------------
+
+function decimalToAmerican(decimal) {
+  if (!Number.isFinite(decimal) || decimal <= 1) {
+    return null;
+  }
+  if (decimal >= 2) {
+    return Math.round((decimal - 1) * 100);
+  }
+  return Math.round(-100 / (decimal - 1));
+}
+
+function americanToDecimal(american) {
+  if (!Number.isFinite(american) || american === 0) {
+    return null;
+  }
+  if (american >= 100) {
+    return american / 100 + 1;
+  }
+  if (american <= -100) {
+    return 100 / Math.abs(american) + 1;
+  }
+  return null;
+}
+
+function formatAmericanDisplay(american) {
+  if (!Number.isFinite(american)) {
+    return "";
+  }
+  return american > 0 ? `+${american}` : String(american);
+}
+
+function formatDecimalDisplay(decimal) {
+  if (!Number.isFinite(decimal)) {
+    return "";
+  }
+  // Show up to 4 decimals and trim trailing zeros for readability.
+  // Examples: 2.15 -> "2.15", 1.9174311926605505 -> "1.9174".
+  const fixed = decimal.toFixed(4);
+  return fixed.replace(/\.?0+$/, "");
+}
+
+function parseAmericanInput(rawValue) {
+  const text = String(rawValue ?? "").trim().replace(/^\+/, "");
+  if (!text) {
+    return null;
+  }
+  // Accept negatives, positives, and leading-plus-stripped integers.
+  // Reject anything with non-numeric content (decimals, letters, etc.).
+  if (!/^-?\d+$/.test(text)) {
+    return null;
+  }
+  const value = Number(text);
+  if (!Number.isFinite(value) || value === 0) {
+    return null;
+  }
+  if (Math.abs(value) < 100) {
+    // Valid American odds always satisfy |x| >= 100. Reject intermediate
+    // values instead of producing a silently-wrong decimal.
+    return null;
+  }
+  return value;
+}
+
 function showInvalidLink(message) {
   dom.error.hidden = false;
   dom.error.textContent = message;
@@ -92,6 +176,19 @@ function showInvalidLink(message) {
 function clearCalculatedField(targetInput, message) {
   targetInput.value = "";
   dom.validation.textContent = message || "";
+}
+
+function setDecimalField(decimalInput, decimalValue) {
+  state.syncingDecimalFromAmerican = true;
+  decimalInput.value = decimalValue === null || decimalValue === "" ? "" : formatDecimalDisplay(decimalValue);
+  state.syncingDecimalFromAmerican = false;
+}
+
+function setAmericanField(americanInput, decimalValue) {
+  state.syncingAmericanFromDecimal = true;
+  const american = decimalToAmerican(decimalValue);
+  americanInput.value = american === null ? "" : formatAmericanDisplay(american);
+  state.syncingAmericanFromDecimal = false;
 }
 
 function renderConfig(config) {
@@ -104,8 +201,14 @@ function renderConfig(config) {
   dom.oddsBBook.textContent = labelB;
   dom.amountABook.textContent = labelA;
   dom.amountBBook.textContent = labelB;
-  dom.oddsA.value = config.oddsA;
-  dom.oddsB.value = config.oddsB;
+
+  // Initialize decimal + American fields together so both are in sync from
+  // the moment the page loads.
+  setDecimalField(dom.oddsA, config.oddsA);
+  setDecimalField(dom.oddsB, config.oddsB);
+  setAmericanField(dom.oddsAAmerican, config.oddsA);
+  setAmericanField(dom.oddsBAmerican, config.oddsB);
+
   dom.status.textContent = `Type on ${config.bookA} or ${config.bookB} to size the opposite leg.`;
   dom.validation.textContent = "";
 
@@ -195,12 +298,61 @@ function onOddsChanged() {
   }
 }
 
+// When the user types into a decimal field, mirror into the matching American
+// field and recompute. Skipped when the write originated from American -> decimal.
+function onDecimalInput(side) {
+  if (state.syncingDecimalFromAmerican) {
+    return;
+  }
+  const decimalInput = side === "a" ? dom.oddsA : dom.oddsB;
+  const americanInput = side === "a" ? dom.oddsAAmerican : dom.oddsBAmerican;
+  const value = Number(decimalInput.value);
+  if (Number.isFinite(value) && value > 1) {
+    setAmericanField(americanInput, value);
+  } else {
+    // Invalid or empty decimal: clear the American mirror so we don't show
+    // a stale conversion.
+    state.syncingAmericanFromDecimal = true;
+    americanInput.value = "";
+    state.syncingAmericanFromDecimal = false;
+  }
+  onOddsChanged();
+}
+
+// When the user types into an American field, parse it, compute the decimal
+// equivalent, write that into the matching decimal field, then recompute.
+// Skipped when the write originated from decimal -> American.
+function onAmericanInput(side) {
+  if (state.syncingAmericanFromDecimal) {
+    return;
+  }
+  const decimalInput = side === "a" ? dom.oddsA : dom.oddsB;
+  const americanInput = side === "a" ? dom.oddsAAmerican : dom.oddsBAmerican;
+  const american = parseAmericanInput(americanInput.value);
+  if (american === null) {
+    // Leave the American text as-is (user may still be typing e.g. "-") but
+    // clear the decimal mirror so downstream math doesn't use stale data.
+    if (americanInput.value.trim() === "") {
+      setDecimalField(decimalInput, null);
+    } else {
+      setDecimalField(decimalInput, null);
+    }
+    onOddsChanged();
+    return;
+  }
+  const decimal = americanToDecimal(american);
+  setDecimalField(decimalInput, decimal);
+  onOddsChanged();
+}
+
 function resetToAlertOdds() {
   if (!state.config) {
     return;
   }
-  dom.oddsA.value = state.config.oddsA;
-  dom.oddsB.value = state.config.oddsB;
+  setDecimalField(dom.oddsA, state.config.oddsA);
+  setDecimalField(dom.oddsB, state.config.oddsB);
+  setAmericanField(dom.oddsAAmerican, state.config.oddsA);
+  setAmericanField(dom.oddsBAmerican, state.config.oddsB);
   onOddsChanged();
 }
 
@@ -213,8 +365,10 @@ function attachInputHandlers() {
     state.lastStakeSource = "b";
     applyCalculation("b");
   });
-  dom.oddsA.addEventListener("input", onOddsChanged);
-  dom.oddsB.addEventListener("input", onOddsChanged);
+  dom.oddsA.addEventListener("input", () => onDecimalInput("a"));
+  dom.oddsB.addEventListener("input", () => onDecimalInput("b"));
+  dom.oddsAAmerican.addEventListener("input", () => onAmericanInput("a"));
+  dom.oddsBAmerican.addEventListener("input", () => onAmericanInput("b"));
   dom.resetOdds.addEventListener("click", resetToAlertOdds);
 }
 

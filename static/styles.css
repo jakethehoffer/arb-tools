@@ -1606,3 +1606,32 @@ button.loading::after {
   }
 }
 
+
+.calculator-odds-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.calculator-odds-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calculator-odds-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calculator-odds-sub input {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 16px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.92);
+}

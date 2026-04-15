@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Arbitrage Stake Calculator</title>
-    <link rel="stylesheet" href="./static/styles.css?v=2" />
+    <link rel="stylesheet" href="./static/styles.css?v=3" />
   </head>
   <body class="calculator-body">
     <main class="calculator-shell">
@@ -40,14 +40,32 @@
 
           <div class="calculator-odds-grid">
             <div class="field calculator-odds-field">
-              <label for="oddsA">Odds</label>
+              <label>Odds</label>
               <div class="calculator-input-caption" id="oddsABook">Bookmaker A</div>
-              <input id="oddsA" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+              <div class="calculator-odds-pair">
+                <div class="calculator-odds-sub">
+                  <span class="calculator-odds-sublabel">Decimal</span>
+                  <input id="oddsA" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Bookmaker A decimal odds" />
+                </div>
+                <div class="calculator-odds-sub">
+                  <span class="calculator-odds-sublabel">American</span>
+                  <input id="oddsAAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="Bookmaker A American odds" />
+                </div>
+              </div>
             </div>
             <div class="field calculator-odds-field">
-              <label for="oddsB">Odds</label>
+              <label>Odds</label>
               <div class="calculator-input-caption" id="oddsBBook">Bookmaker B</div>
-              <input id="oddsB" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+              <div class="calculator-odds-pair">
+                <div class="calculator-odds-sub">
+                  <span class="calculator-odds-sublabel">Decimal</span>
+                  <input id="oddsB" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Bookmaker B decimal odds" />
+                </div>
+                <div class="calculator-odds-sub">
+                  <span class="calculator-odds-sublabel">American</span>
+                  <input id="oddsBAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="Bookmaker B American odds" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -71,6 +89,6 @@
       </section>
     </main>
 
-    <script type="module" src="./static/calculator.js?v=2"></script>
+    <script type="module" src="./static/calculator.js?v=3"></script>
   </body>
 </html>
