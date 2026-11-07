@@ -208,8 +208,10 @@ function renderStatus() {
   const blocked = attempted - opened;
   dom.summary.textContent = `${total} destination${total === 1 ? "" : "s"} ready.`;
   if (state.helperOpened && !attempted) {
+    // Pinnacle's own sign-in can land on its home page, and no address
+    // setting brings it back (checked 2026-11-07), so this tab is the way back.
     dom.status.textContent =
-      "Opened in their own windows on this computer. You can close this tab. If nothing opened, press Open all again.";
+      "Opened in their own windows. Keep this tab: if signing in to a site loses the game, its button below opens it again.";
     return;
   }
   if (!attempted) {
