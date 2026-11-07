@@ -13,7 +13,18 @@ const state = {
   // Raw v=3 base64url payload kept so the "Open all again" button can retry
   // the native arbtabs:// handler without needing to re-encode.
   v3Payload: null,
+  // True once the Windows helper has taken over and opened its own windows.
+  helperOpened: false,
+  // Set while waiting to see whether the helper took over.
+  helperWatch: null,
 };
+
+// How long to wait for the Windows helper before trying browser pop-ups. On
+// 2026-11-07 the helper opened its first window about 1-2 s after the hand-off.
+// The automatic attempt has no click behind it, so it can wait longer than
+// the button, whose click only lets the browser open pop-ups for 5 s.
+const HELPER_WAIT_MS = 4000;
+const HELPER_WAIT_AFTER_CLICK_MS = 2500;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -159,8 +170,10 @@ function renderTargets() {
   dom.targets.innerHTML = state.targets
     .map((target, index) => {
       const result = state.results[index] || { attempted: false, opened: false };
-      const pillClass = result.attempted ? (result.opened ? "launcher-pill opened" : "launcher-pill blocked") : "launcher-pill";
-      const pillText = result.attempted ? (result.opened ? "Opened" : "Blocked") : "Pending";
+      const opened = result.opened || (state.helperOpened && !result.attempted);
+      const attempted = result.attempted || state.helperOpened;
+      const pillClass = attempted ? (opened ? "launcher-pill opened" : "launcher-pill blocked") : "launcher-pill";
+      const pillText = attempted ? (opened ? "Opened" : "Blocked") : "Pending";
       const noteHtml = target.note ? `<div class="launcher-note">${escapeHtml(target.note)}</div>` : "";
       return `
         <article class="launcher-card">
@@ -194,9 +207,16 @@ function renderStatus() {
   const opened = state.results.filter((result) => result?.opened).length;
   const blocked = attempted - opened;
   dom.summary.textContent = `${total} destination${total === 1 ? "" : "s"} ready.`;
+  if (state.helperOpened && !attempted) {
+    dom.status.textContent =
+      "Opened in their own windows on this computer. You can close this tab. If nothing opened, press Open all again.";
+    return;
+  }
   if (!attempted) {
-    if (state.v3Payload) {
-      dom.status.textContent = `Opening native Windows launcher for ${total} destination${total === 1 ? "" : "s"}…`;
+    if (state.helperWatch) {
+      dom.status.textContent = `Opening ${total} page${total === 1 ? "" : "s"} on this computer…`;
+    } else if (state.v3Payload) {
+      dom.status.textContent = `If the pages did not open, press Open all again or use the buttons below.`;
     } else {
       dom.status.textContent = `Ready to open ${total} destination${total === 1 ? "" : "s"}.`;
     }
@@ -263,6 +283,56 @@ function triggerNativeHandler(encodedPayload) {
   }
 }
 
+// A web page cannot ask whether the arbtabs:// helper ran. The helper opens
+// each page as a new Edge window, which takes focus from this tab, so losing
+// focus (or being hidden) soon after the hand-off means it took over. Only
+// then is the pop-up fallback skipped. Before 2026-11-07 the page checked
+// only whether it was still visible, so it ran the fallback behind the
+// helper's windows and reported every page as blocked even though all of
+// them had opened.
+function watchForHelper(waitMs, onNoHelper) {
+  stopWatchingForHelper();
+  const hadFocus = document.hasFocus();
+  const finish = (helperTookOver) => {
+    stopWatchingForHelper();
+    if (helperTookOver) {
+      state.helperOpened = true;
+      renderTargets();
+      renderStatus();
+    } else if (hadFocus) {
+      onNoHelper();
+    } else {
+      // This tab never had focus, so focus tells us nothing. Pop-ups without
+      // a click would be blocked anyway, so leave it to the buttons.
+      renderStatus();
+    }
+  };
+  const onBlur = () => finish(true);
+  const onVisibility = () => {
+    if (document.visibilityState === "hidden") {
+      finish(true);
+    }
+  };
+  window.addEventListener("blur", onBlur);
+  document.addEventListener("visibilitychange", onVisibility);
+  const timer = window.setTimeout(() => finish(hadFocus && !document.hasFocus()), waitMs);
+  state.helperWatch = {
+    stop: () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
+    },
+  };
+  renderStatus();
+}
+
+function stopWatchingForHelper() {
+  if (state.helperWatch) {
+    state.helperWatch.stop();
+    state.helperWatch = null;
+  }
+}
+
 function showInvalid(message) {
   dom.error.hidden = false;
   dom.error.textContent = message;
@@ -272,10 +342,16 @@ function showInvalid(message) {
 
 function bindEvents() {
   dom.openAllButton.addEventListener("click", () => {
-    if (state.v3Payload) {
-      triggerNativeHandler(state.v3Payload.encoded);
+    if (!state.v3Payload) {
+      openAllTargets();
+      return;
     }
-    openAllTargets();
+    // Opening pop-ups at once as well would duplicate every helper window.
+    state.helperOpened = false;
+    state.results = state.targets.map(() => ({ attempted: false, opened: false }));
+    renderTargets();
+    triggerNativeHandler(state.v3Payload.encoded);
+    watchForHelper(HELPER_WAIT_AFTER_CLICK_MS, openAllTargets);
   });
   dom.targets.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action='retry']");
@@ -315,16 +391,10 @@ function init() {
 
   if (state.v3Payload) {
     // Fire the native Windows handler immediately — this is the whole point
-    // of the v=3 flow. If the handler takes over the browser navigates to
-    // the protocol and the popup fallback never runs. Otherwise give the
-    // browser a brief window to show the "open external app" prompt, then
-    // fall back to the popup flow as a safety net.
+    // of the v=3 flow. Fall back to pop-ups only when nothing took focus
+    // from this tab, which means the helper did not open its windows.
     triggerNativeHandler(state.v3Payload.encoded);
-    window.setTimeout(() => {
-      if (document.visibilityState === "visible") {
-        openAllTargets();
-      }
-    }, 1800);
+    watchForHelper(HELPER_WAIT_MS, openAllTargets);
   } else {
     openAllTargets();
   }
