@@ -18,6 +18,11 @@ const dom = {
   amountBBook: document.getElementById("amountBBook"),
   amountA: document.getElementById("amountA"),
   amountB: document.getElementById("amountB"),
+  cashA: document.getElementById("cashA"),
+  cashB: document.getElementById("cashB"),
+  lockSection: document.getElementById("lockSection"),
+  lockIn: document.getElementById("lockIn"),
+  lockNote: document.getElementById("lockNote"),
   validation: document.getElementById("calculatorValidation"),
   status: document.getElementById("calculatorStatus"),
 };
@@ -63,6 +68,20 @@ function parseOptionalFloat(params, key) {
   }
   const value = Number(raw);
   return Number.isFinite(value) ? value : null;
+}
+
+function parseMatching(params, key, pattern) {
+  const value = (params.get(key) || "").trim();
+  return pattern.test(value) ? value : null;
+}
+
+function parseOptionalAmount(params, key) {
+  const value = parsePositiveAmount(params.get(key));
+  return value === null ? null : value;
+}
+
+function formatMoney(value) {
+  return `$${value.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function roundEquivalentStake(value) {
@@ -176,6 +195,7 @@ function showInvalidLink(message) {
 function clearCalculatedField(targetInput, message) {
   targetInput.value = "";
   dom.validation.textContent = message || "";
+  updateLockLink();
 }
 
 function setDecimalField(decimalInput, decimalValue) {
@@ -222,7 +242,88 @@ function renderConfig(config) {
   dom.arbOriginal.textContent = original.text;
   dom.arbOriginal.className = `calculator-arb-badge ${original.className}`;
 
+  for (const [element, cash] of [[dom.cashA, config.cashA], [dom.cashB, config.cashB]]) {
+    if (cash !== null) {
+      element.hidden = false;
+      element.textContent = `Saved cash: ${formatMoney(cash)}`;
+    }
+  }
+  if (config.stakeA !== null && config.stakeB !== null) {
+    dom.amountA.value = String(config.stakeA);
+    dom.amountB.value = String(config.stakeB);
+    // The first site is placed first, so odds edits resize the second.
+    state.lastStakeSource = "a";
+    dom.status.textContent = "Amounts are filled in from your saved cash. Change either one to resize the other.";
+  }
+  if (config.keyA && config.keyB && config.lockToken && config.bot && config.keyA !== config.keyB) {
+    dom.lockSection.hidden = false;
+    if (alreadyLocked(config.lockToken)) {
+      dom.lockNote.textContent = "You already tapped Lock in for this alert. The bot only counts it once.";
+    }
+  }
+
   updateCurrentArb();
+  updateLockLink();
+}
+
+function toCents(rawValue) {
+  const value = parsePositiveAmount(rawValue);
+  if (value === null) {
+    return null;
+  }
+  const cents = Math.round(value * 100);
+  return cents > 0 && cents < 1e9 ? cents : null;
+}
+
+function lockStorageKey(token) {
+  return `arbLocked:${token}`;
+}
+
+function alreadyLocked(token) {
+  try {
+    return window.localStorage.getItem(lockStorageKey(token)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function updateLockLink() {
+  const config = state.config;
+  if (!config || dom.lockSection.hidden) {
+    return;
+  }
+  const centsA = toCents(dom.amountA.value);
+  const centsB = toCents(dom.amountB.value);
+  if (centsA === null || centsB === null) {
+    dom.lockIn.removeAttribute("href");
+    dom.lockIn.setAttribute("aria-disabled", "true");
+  } else {
+    const start = `L_${config.keyA}_${centsA}_${config.keyB}_${centsB}_${config.lockToken}`;
+    dom.lockIn.href = `https://t.me/${config.bot}?start=${start}`;
+    dom.lockIn.removeAttribute("aria-disabled");
+  }
+  const over = [];
+  if (config.cashA !== null && centsA !== null && centsA > Math.round(config.cashA * 100)) {
+    over.push(config.bookA);
+  }
+  if (config.cashB !== null && centsB !== null && centsB > Math.round(config.cashB * 100)) {
+    over.push(config.bookB);
+  }
+  if (over.length) {
+    dom.validation.textContent = `That is more than your saved cash on ${over.join(" and ")}.`;
+  }
+}
+
+function onLockIn() {
+  if (!state.config || !dom.lockIn.getAttribute("href")) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(lockStorageKey(state.config.lockToken), "1");
+  } catch {
+    // Private browsing can block storage. The bot still counts it once.
+  }
+  dom.lockNote.textContent = "Telegram should open now. Tap Start there to save the amounts.";
 }
 
 function readConfig() {
@@ -237,6 +338,15 @@ function readConfig() {
     eventText: parseRequiredText(params, "e"),
     marketHint: parseRequiredText(params, "m"),
     originalArb: parseOptionalFloat(params, "arb"),
+    // Saved-cash fields from the alert. All optional; Lock in needs keys, code and bot.
+    keyA: parseMatching(params, "ak", /^[a-z0-9]{1,20}$/),
+    keyB: parseMatching(params, "bk", /^[a-z0-9]{1,20}$/),
+    cashA: parseOptionalAmount(params, "ac"),
+    cashB: parseOptionalAmount(params, "bc"),
+    stakeA: parseOptionalAmount(params, "as"),
+    stakeB: parseOptionalAmount(params, "bs"),
+    lockToken: parseMatching(params, "lk", /^[0-9a-f]{10}$/),
+    bot: parseMatching(params, "bot", /^[A-Za-z0-9_]{5,32}$/),
   };
 
   if (!config.bookA || !config.labelA || !config.oddsA || !config.bookB || !config.labelB || !config.oddsB) {
@@ -289,6 +399,7 @@ function applyCalculation(source) {
   const roundedEquivalent = roundEquivalentStake(exactEquivalent);
   targetInput.value = roundedEquivalent === null ? "" : String(roundedEquivalent);
   dom.validation.textContent = "";
+  updateLockLink();
 }
 
 function onOddsChanged() {
@@ -370,6 +481,7 @@ function attachInputHandlers() {
   dom.oddsAAmerican.addEventListener("input", () => onAmericanInput("a"));
   dom.oddsBAmerican.addEventListener("input", () => onAmericanInput("b"));
   dom.resetOdds.addEventListener("click", resetToAlertOdds);
+  dom.lockIn.addEventListener("click", onLockIn);
 }
 
 function init() {

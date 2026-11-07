@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Arbitrage Stake Calculator</title>
-    <link rel="stylesheet" href="./static/styles.css?v=4" />
+    <link rel="stylesheet" href="./static/styles.css?v=5" />
   </head>
   <body class="calculator-body">
     <main class="calculator-shell">
@@ -76,19 +76,26 @@
               <label for="amountA">Amount on bookmaker A</label>
               <div class="calculator-input-caption" id="amountABook">Bookmaker A</div>
               <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+              <div class="calculator-cash" id="cashA" hidden></div>
             </div>
             <div class="field calculator-field">
               <label for="amountB">Amount on bookmaker B</label>
               <div class="calculator-input-caption" id="amountBBook">Bookmaker B</div>
               <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+              <div class="calculator-cash" id="cashB" hidden></div>
             </div>
           </div>
+
+          <section class="calculator-lock" id="lockSection" hidden>
+            <a class="calculator-lock-btn" id="lockIn" role="button">Lock in these amounts</a>
+            <p class="calculator-lock-note" id="lockNote">After placing both bets, tap Lock in. Telegram opens. Tap Start there to save the amounts.</p>
+          </section>
         </div>
 
         <div class="calculator-validation" id="calculatorValidation" aria-live="polite"></div>
       </section>
     </main>
 
-    <script type="module" src="./static/calculator.js?v=3"></script>
+    <script type="module" src="./static/calculator.js?v=4"></script>
   </body>
 </html>
