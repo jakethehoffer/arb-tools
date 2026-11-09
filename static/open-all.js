@@ -82,6 +82,23 @@ function normalizeTarget(rawTarget) {
   return target;
 }
 
+// BetMGM's game pages now serve Alberta and Ontario. Their "Log in to Bet"
+// button asks for a province, then lands on the casino home page and loses
+// the game (checked signed out 2026-11-09). The plain sign-in page skips the
+// province question and takes a return address (rurl). The return after a
+// finished sign-in was not tested, because that needs Jake's account.
+function signInFirstUrl(target) {
+  try {
+    const parsed = new URL(target.url);
+    if (parsed.hostname === "www.betmgm.ca" && parsed.pathname.startsWith("/en/sports/events/")) {
+      return `https://www.betmgm.ca/en/labelhost/login?rurl=${encodeURIComponent(target.url)}`;
+    }
+  } catch {
+    // Not a usable address; no sign-in link.
+  }
+  return null;
+}
+
 // Parse the v=3 ?payload= format emitted by the daemon after 2026-04-15.
 // Payload is a base64url-encoded JSON object with {token, targets[], verify?}
 // — the same envelope the arbtabs://launch?v=3&payload=... deep link carries,
@@ -170,11 +187,18 @@ function renderTargets() {
   dom.targets.innerHTML = state.targets
     .map((target, index) => {
       const result = state.results[index] || { attempted: false, opened: false };
-      const opened = result.opened || (state.helperOpened && !result.attempted);
+      // The page cannot see whether the helper opened a page, only that it
+      // was handed over, so say "Sent" rather than "Opened" (2026-11-09).
+      const sentToHelper = state.helperOpened && !result.attempted;
+      const opened = result.opened || sentToHelper;
       const attempted = result.attempted || state.helperOpened;
       const pillClass = attempted ? (opened ? "launcher-pill opened" : "launcher-pill blocked") : "launcher-pill";
-      const pillText = attempted ? (opened ? "Opened" : "Blocked") : "Pending";
+      const pillText = attempted ? (sentToHelper ? "Sent" : opened ? "Opened" : "Blocked") : "Pending";
       const noteHtml = target.note ? `<div class="launcher-note">${escapeHtml(target.note)}</div>` : "";
+      const signInUrl = signInFirstUrl(target);
+      const signInHtml = signInUrl
+        ? `<a class="launcher-inline-link" href="${escapeHtml(signInUrl)}" target="_blank" rel="noopener noreferrer">Sign in, then back to this game</a>`
+        : "";
       return `
         <article class="launcher-card">
           <div class="launcher-card-head">
@@ -194,6 +218,7 @@ function renderTargets() {
             <a class="launcher-inline-link" href="${escapeHtml(target.url)}" target="_blank" rel="noopener noreferrer">
               Direct link
             </a>
+            ${signInHtml}
           </div>
         </article>
       `;
@@ -210,8 +235,11 @@ function renderStatus() {
   if (state.helperOpened && !attempted) {
     // Pinnacle's own sign-in can land on its home page, and no address
     // setting brings it back (checked 2026-11-07), so this tab is the way back.
+    // On 2026-11-09 the helper refused a BetMGM link and opened nothing while
+    // this text said the pages had opened. The helper now shows its own
+    // notice when it fails, and this text no longer claims success.
     dom.status.textContent =
-      "Opened in their own windows. Keep this tab: if signing in to a site loses the game, its button below opens it again.";
+      "Sent to the tab opener on this computer. If no windows appeared, use the buttons below. Keep this tab: if signing in to a site loses the game, its button below opens it again.";
     return;
   }
   if (!attempted) {
