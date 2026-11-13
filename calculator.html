@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Arbitrage Stake Calculator</title>
-    <link rel="stylesheet" href="./static/styles.css?v=5" />
+    <link rel="stylesheet" href="./static/styles.css?v=6" />
   </head>
   <body class="calculator-body">
     <main class="calculator-shell">
@@ -38,53 +38,59 @@
             </div>
           </div>
 
-          <div class="calculator-odds-grid">
-            <div class="field calculator-odds-field">
-              <label>Odds</label>
+          <p class="calculator-order">The other two windows go left to right in this same order.</p>
+
+          <div class="calculator-legs">
+            <section class="calculator-leg calculator-leg-first">
+              <p class="calculator-leg-step">Bet this first</p>
               <div class="calculator-input-caption" id="oddsABook">Bookmaker A</div>
-              <div class="calculator-odds-pair">
-                <div class="calculator-odds-sub">
-                  <span class="calculator-odds-sublabel">Decimal</span>
-                  <input id="oddsA" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Bookmaker A decimal odds" />
-                </div>
-                <div class="calculator-odds-sub">
-                  <span class="calculator-odds-sublabel">American</span>
-                  <input id="oddsAAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="Bookmaker A American odds" />
+              <div class="field calculator-odds-field">
+                <label>Odds</label>
+                <div class="calculator-odds-pair">
+                  <div class="calculator-odds-sub">
+                    <span class="calculator-odds-sublabel">Decimal</span>
+                    <input id="oddsA" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="First site decimal odds" />
+                  </div>
+                  <div class="calculator-odds-sub">
+                    <span class="calculator-odds-sublabel">American</span>
+                    <input id="oddsAAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="First site American odds" />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="field calculator-odds-field">
-              <label>Odds</label>
+              <div class="field calculator-field">
+                <label for="amountA">Amount</label>
+                <div class="calculator-input-caption" id="amountABook" hidden>Bookmaker A</div>
+                <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+                <div class="calculator-cash" id="cashA" hidden></div>
+              </div>
+            </section>
+
+            <section class="calculator-leg">
+              <p class="calculator-leg-step">Then this one</p>
               <div class="calculator-input-caption" id="oddsBBook">Bookmaker B</div>
-              <div class="calculator-odds-pair">
-                <div class="calculator-odds-sub">
-                  <span class="calculator-odds-sublabel">Decimal</span>
-                  <input id="oddsB" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Bookmaker B decimal odds" />
-                </div>
-                <div class="calculator-odds-sub">
-                  <span class="calculator-odds-sublabel">American</span>
-                  <input id="oddsBAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="Bookmaker B American odds" />
+              <div class="field calculator-odds-field">
+                <label>Odds</label>
+                <div class="calculator-odds-pair">
+                  <div class="calculator-odds-sub">
+                    <span class="calculator-odds-sublabel">Decimal</span>
+                    <input id="oddsB" type="number" min="1.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Second site decimal odds" />
+                  </div>
+                  <div class="calculator-odds-sub">
+                    <span class="calculator-odds-sublabel">American</span>
+                    <input id="oddsBAmerican" type="text" inputmode="numeric" placeholder="+100" aria-label="Second site American odds" />
+                  </div>
                 </div>
               </div>
-            </div>
+              <div class="field calculator-field">
+                <label for="amountB">Amount</label>
+                <div class="calculator-input-caption" id="amountBBook" hidden>Bookmaker B</div>
+                <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+                <div class="calculator-cash" id="cashB" hidden></div>
+              </div>
+            </section>
           </div>
 
           <button type="button" class="calculator-reset-btn" id="resetOdds" style="display:none">Reset to alert odds</button>
-
-          <div class="calculator-input-grid">
-            <div class="field calculator-field">
-              <label for="amountA">Amount on bookmaker A</label>
-              <div class="calculator-input-caption" id="amountABook">Bookmaker A</div>
-              <input id="amountA" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
-              <div class="calculator-cash" id="cashA" hidden></div>
-            </div>
-            <div class="field calculator-field">
-              <label for="amountB">Amount on bookmaker B</label>
-              <div class="calculator-input-caption" id="amountBBook">Bookmaker B</div>
-              <input id="amountB" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
-              <div class="calculator-cash" id="cashB" hidden></div>
-            </div>
-          </div>
 
           <section class="calculator-lock" id="lockSection" hidden>
             <a class="calculator-lock-btn" id="lockIn" role="button">Lock in these amounts</a>
@@ -96,6 +102,6 @@
       </section>
     </main>
 
-    <script type="module" src="./static/calculator.js?v=4"></script>
+    <script type="module" src="./static/calculator.js?v=5"></script>
   </body>
 </html>

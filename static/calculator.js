@@ -217,6 +217,8 @@ function renderConfig(config) {
 
   const labelA = `${config.bookA} | ${config.labelA}`;
   const labelB = `${config.bookB} | ${config.labelB}`;
+  dom.heading.textContent = `Bet ${config.bookA} first`;
+  document.title = `Bet ${config.bookA} first`;
   dom.oddsABook.textContent = labelA;
   dom.oddsBBook.textContent = labelB;
   dom.amountABook.textContent = labelA;
